@@ -1,0 +1,51 @@
+# ========================
+# 📦 Python (FastAPI)
+# ========================
+__pycache__/
+*.py[cod]
+*.env
+*.db
+*.sqlite3
+*.log
+*.egg-info/
+venv/
+env/
+dist/
+build/
+
+# ========================
+# 🌐 Node.js (Next.js frontend)
+# ========================
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/.vercel/
+frontend/.turbo/
+frontend/.tsbuildinfo
+
+# ========================
+# 🧪 Testing & Coverage
+# ========================
+coverage/
+*.cover
+*.lcov
+
+# ========================
+# ⚙️ System & Editor Files
+# ========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ========================
+# 📦 Package Managers
+# ========================
+*.lock
+yarn.lock
+pnpm-lock.yaml
