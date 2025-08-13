@@ -272,51 +272,108 @@ export const useChat = () => {
 };
 
 
-    const handleFileUpload = async (event: any) => {
-      const files = Array.from(event.target.files);
-      const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
+//     const handleFileUpload = async (event: any) => {
+//       const files = Array.from(event.target.files);
+//       const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
 
-      if (pdfFiles.length === 0) {
-        alert('Only PDFs allowed');
-        return;
-      }
+//       if (pdfFiles.length === 0) {
+//         alert('Only PDFs allowed');
+//         return;
+//       }
 
-      const newFiles = pdfFiles.map((file: any) => ({
-        id: Date.now() + Math.random(),
-        name: file.name,
-        size: file.size,
-        uploadTime: new Date(),
-        rawFile: file
-    }));
+//       const newFiles = pdfFiles.map((file: any) => ({
+//         id: Date.now() + Math.random(),
+//         name: file.name,
+//         size: file.size,
+//         uploadTime: new Date(),
+//         rawFile: file
+//     }));
 
+//   setUploadedFiles(prev => [...prev, ...newFiles]);
+
+//   const uploadMessages = newFiles.map(file => ({
+//     id: Date.now() + Math.random(),
+//     text: `📄 Uploaded: ${file.name}`,
+//     sender: 'bot',
+//     timestamp: new Date()
+//   }));
+
+//   setMessages(prev => [...prev, ...uploadMessages]);
+
+//    // 🔹 Immediately request suggested questions
+//       try {
+//         const formData = new FormData();
+//         pdfFiles.forEach(file => formData.append("files", file));
+
+//         const res = await fetch("http://localhost:8000/generate-suggested-questions", {
+//           method: "POST",
+//           body: formData
+//         });
+
+//         const data = await res.json();
+//         if (data.questions) {
+//           setSuggestedQuestions(data.questions);
+//         }
+//       } catch (err) {
+//         console.error("Error generating suggested questions", err);
+//       }
+// };
+
+const handleFileUpload = async (event: any) => {
+  const files = Array.from(event.target.files);
+  const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
+
+  if (pdfFiles.length === 0) {
+    alert('Only PDFs allowed');
+    return;
+  }
+
+  const newFiles = pdfFiles.map((file: any) => ({
+    id: Date.now() + Math.random(),
+    name: file.name,
+    size: file.size,
+    uploadTime: new Date(),
+    rawFile: file
+  }));
+
+  // Update uploaded files in state
   setUploadedFiles(prev => [...prev, ...newFiles]);
 
+  // Show "uploaded" messages in chat
   const uploadMessages = newFiles.map(file => ({
     id: Date.now() + Math.random(),
     text: `📄 Uploaded: ${file.name}`,
     sender: 'bot',
     timestamp: new Date()
   }));
-
   setMessages(prev => [...prev, ...uploadMessages]);
 
-   // 🔹 Immediately request suggested questions
-      try {
-        const formData = new FormData();
-        pdfFiles.forEach(file => formData.append("files", file));
+  try {
+    // 1️⃣ Upload and index PDFs in Qdrant
+    const uploadFormData = new FormData();
+    pdfFiles.forEach(file => uploadFormData.append("files", file));
 
-        const res = await fetch("http://localhost:8000/generate-suggested-questions", {
-          method: "POST",
-          body: formData
-        });
+    await fetch("http://localhost:8000/upload-pdfs", {
+      method: "POST",
+      body: uploadFormData
+    });
 
-        const data = await res.json();
-        if (data.questions) {
-          setSuggestedQuestions(data.questions);
-        }
-      } catch (err) {
-        console.error("Error generating suggested questions", err);
-      }
+    // 2️⃣ Request suggested questions
+    const suggestFormData = new FormData();
+    pdfFiles.forEach(file => suggestFormData.append("files", file));
+
+    const res = await fetch("http://localhost:8000/generate-suggested-questions", {
+      method: "POST",
+      body: suggestFormData
+    });
+
+    const data = await res.json();
+    if (data.questions) {
+      setSuggestedQuestions(data.questions);
+    }
+  } catch (err) {
+    console.error("Error uploading PDFs or generating suggested questions", err);
+  }
 };
 
 

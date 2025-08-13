@@ -12,6 +12,14 @@ venv/
 env/
 dist/
 build/
+backend/.env
+backend/services/testing/test_qdrant.py
+backend/services/testing/test_ocr.py
+backend/services/test_chatbot.py
+backend/temp/*
+backend/routes/__pycache__/*
+backend/services/__pycache__/*
+
 
 # ========================
 # 🌐 Node.js (Next.js frontend)

@@ -2,7 +2,7 @@
 from chatbot import answer_query_from_pdf
 from config import configure_gemini
 
-key = "AIzaSyBpNMHIamTszn_TsqUIUJqyPn9RVj8q0NM"
+key = "abcdefghijklmnopqrstuvwxyz1234567890"  # Replace with your actual API key
 
 configure_gemini(key)
 

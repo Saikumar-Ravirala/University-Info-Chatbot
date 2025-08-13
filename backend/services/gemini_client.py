@@ -1,8 +1,14 @@
 import google.generativeai as genai
 from typing import List, Dict
 import json
+from dotenv import load_dotenv
+import os
 
-genai.configure(api_key="AIzaSyBpNMHIamTszn_TsqUIUJqyPn9RVj8q0NM")
+load_dotenv()
+
+api_key = os.getenv("GEMINI_API_KEY")
+
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 def format_rag_prompt(context_chunks: List[str], user_query: str, metadata: List[Dict]) -> str:
@@ -84,10 +90,8 @@ def stream_gemini_answer(context_chunks: List[str], user_query: str, metadata: L
 # import json
 # # from config import configure_gemini
 
-# # key = "AIzaSyBpNMHIamTszn_TsqUIUJqyPn9RVj8q0NM"
 
 # # configure_gemini(key)
-# genai.configure(api_key="AIzaSyBpNMHIamTszn_TsqUIUJqyPn9RVj8q0NM")
 # model = genai.GenerativeModel("gemini-2.5-flash")
 
 # def format_rag_prompt(context_chunks: List[str], user_query: str) -> str:

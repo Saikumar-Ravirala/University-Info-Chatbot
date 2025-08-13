@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, Form, File, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from services.chatbot import get_rag_context_from_pdfs
+from services.chatbot import index_pdfs_to_qdrant,query_rag
 from utils.context import get_history, save_message
 import os
 from typing import List
@@ -12,6 +12,47 @@ router = APIRouter()
 
 from anyio import to_thread
 from services.pdf_parser import  extract_text_from_pdf
+
+@router.post("/upload-pdfs")
+async def upload_pdfs(files: List[UploadFile] = File(...)):
+    temp_dir = "temp"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    pdf_paths = []
+    file_names = []
+
+    for file in files:
+        file_path = os.path.join(temp_dir, file.filename)
+        with open(file_path, "wb") as f:
+            f.write(await file.read())
+        pdf_paths.append(file_path)
+        file_names.append(file.filename)
+
+    # Index PDFs into Qdrant
+    await to_thread.run_sync(lambda: index_pdfs_to_qdrant(pdf_paths, file_names))
+
+    return JSONResponse({"message": "PDFs indexed successfully"})
+
+@router.post("/chat-stream")
+async def chat_stream(request: Request, query: str = Form(...)):
+    session_id = request.client.host
+    save_message(session_id, "user", query)
+    history = get_history(session_id)
+
+    async def bot_streamer():
+        context_chunks, metadata = await to_thread.run_sync(
+            lambda: query_rag(query)
+        )
+
+        full_answer = ""
+        for chunk in stream_gemini_answer(context_chunks, query, metadata, history):
+            full_answer += chunk
+            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+
+        save_message(session_id, "bot", full_answer.strip())
+
+    return StreamingResponse(bot_streamer(), media_type="text/event-stream")
+
 
 
 @router.post("/generate-suggested-questions")
@@ -250,56 +291,57 @@ import json
 
 #     return StreamingResponse(bot_streamer(), media_type="text/event-stream")
 
-@router.post("/chat-stream")
-async def chat_stream(request: Request, query: str = Form(...), files: List[UploadFile] = File(...)):
-    from anyio import to_thread
-    import os
+#working version latest 13/8
+# @router.post("/chat-stream")
+# async def chat_stream(request: Request, query: str = Form(...), files: List[UploadFile] = File(...)):
+#     from anyio import to_thread
+#     import os
 
-    temp_dir = "temp"
-    os.makedirs(temp_dir, exist_ok=True)
+#     temp_dir = "temp"
+#     os.makedirs(temp_dir, exist_ok=True)
 
-    session_id = request.client.host
-    pdf_paths = []
-    file_names = []
+#     session_id = request.client.host
+#     pdf_paths = []
+#     file_names = []
 
-    for file in files:
-        file_path = os.path.join(temp_dir, file.filename)
-        with open(file_path, "wb") as f:
-            f.write(await file.read())
-        pdf_paths.append(file_path)
-        file_names.append(file.filename)
+#     for file in files:
+#         file_path = os.path.join(temp_dir, file.filename)
+#         with open(file_path, "wb") as f:
+#             f.write(await file.read())
+#         pdf_paths.append(file_path)
+#         file_names.append(file.filename)
 
-    save_message(session_id, "user", query)
-    history = get_history(session_id)
+#     save_message(session_id, "user", query)
+#     history = get_history(session_id)
 
-    async def bot_streamer():
-        context_chunks, metadata = await to_thread.run_sync(
-            lambda: get_rag_context_from_pdfs(pdf_paths, file_names, query)
-        )
+#     async def bot_streamer():
+#         context_chunks, metadata = await to_thread.run_sync(
+#             lambda: get_rag_context_from_pdfs(pdf_paths, file_names, query)
+#         )
 
-        full_answer = ""
+#         full_answer = ""
 
-        # chunks = await to_thread.run_sync(
-        #     lambda: list(stream_gemini_answer(context_chunks, query, metadata, history))
-        # )
+#         # chunks = await to_thread.run_sync(
+#         #     lambda: list(stream_gemini_answer(context_chunks, query, metadata, history))
+#         # )
 
-        # Stream the answer character by character
-        # for chunk in chunks:
-        #     for char in chunk:
-        #         if char.strip() == "" and char != " ":
-        #             continue  # Ignore tabs, newlines, etc.
-        #         full_answer += char
-        #         yield f"data: {json.dumps({'chunk': char})}\n\n"
-        #         await asyncio.sleep(0.01)
+#         # Stream the answer character by character
+#         # for chunk in chunks:
+#         #     for char in chunk:
+#         #         if char.strip() == "" and char != " ":
+#         #             continue  # Ignore tabs, newlines, etc.
+#         #         full_answer += char
+#         #         yield f"data: {json.dumps({'chunk': char})}\n\n"
+#         #         await asyncio.sleep(0.01)
 
-        # Stream directly from Gemini as chunks come in
-        for chunk in stream_gemini_answer(context_chunks, query, metadata, history):
-            full_answer += chunk
-            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+#         # Stream directly from Gemini as chunks come in
+#         for chunk in stream_gemini_answer(context_chunks, query, metadata, history):
+#             full_answer += chunk
+#             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
-        save_message(session_id, "bot", full_answer.strip())
+#         save_message(session_id, "bot", full_answer.strip())
 
-    return StreamingResponse(bot_streamer(), media_type="text/event-stream")
+#     return StreamingResponse(bot_streamer(), media_type="text/event-stream")
 
 
 # @router.post("/chat")
