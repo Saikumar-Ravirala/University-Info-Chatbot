@@ -14,11 +14,34 @@ def get_embeddings(chunks: List[str]) -> np.ndarray:
     embeddings = model.encode(chunks, show_progress_bar=True)
     return np.array(embeddings)
 
+# def get_embeddings_for_metadata(chunks: List[Dict]) -> np.ndarray:
+#     """
+#     Converts list of chunk dicts into embeddings using 'text' field.
+#     Returns NumPy array of shape (num_chunks, embedding_dim).
+#     """
+#     texts = [chunk["text"] for chunk in chunks]
+#     embeddings = model.encode(texts, show_progress_bar=True)
+#     return np.array(embeddings)
+
 def get_embeddings_for_metadata(chunks: List[Dict]) -> np.ndarray:
     """
     Converts list of chunk dicts into embeddings using 'text' field.
     Returns NumPy array of shape (num_chunks, embedding_dim).
+    Handles empty chunks or missing text safely.
     """
-    texts = [chunk["text"] for chunk in chunks]
-    embeddings = model.encode(texts, show_progress_bar=True)
-    return np.array(embeddings)
+    try:
+        # Extract only valid non-empty texts
+        texts = [chunk.get("text", "").strip() for chunk in chunks if chunk.get("text", "").strip()]
+
+        if not texts:
+            print("⚠️ No valid text found in chunks, returning empty embedding array")
+            return np.empty((0, 0), dtype=np.float32)
+
+        embeddings = model.encode(texts, show_progress_bar=True)
+
+        # Convert to numpy array
+        return np.array(embeddings, dtype=np.float32)
+
+    except Exception as e:
+        print(f"❌ Error while generating embeddings: {e}")
+        return np.empty((0, 0), dtype=np.float32)

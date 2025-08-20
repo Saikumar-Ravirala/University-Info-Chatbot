@@ -15,7 +15,7 @@ export const useChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
 
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -25,180 +25,11 @@ export const useChat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // const handleSendMessage = async () => {
-  //   if (!inputMessage.trim() || uploadedFiles.length === 0) return;
-
-  //   const userMessage = {
-  //     id: messages.length + 1,
-  //     text: inputMessage,
-  //     sender: 'user',
-  //     timestamp: new Date()
-  //   };
-
-  //   setMessages(prev => [...prev, userMessage]);
-  //   setInputMessage('');
-  //   setIsLoading(true);
-  //   setIsTyping(true);
-
-  //   const formData = new FormData();
-  //   formData.append("query", inputMessage);
-  //   formData.append("file", uploadedFiles[0].rawFile);
-
-  //   try {
-  //     const response = await fetch("http://localhost:8000/chat", {
-  //       method: "POST",
-  //       body: formData
-  //     });
-
-  //     const data = await response.json();
-
-  //     const botMessage = {
-  //       id: messages.length + 2,
-  //       text: data.answer || "I'm having trouble processing your request.",
-  //       sender: 'bot',
-  //       timestamp: new Date()
-  //     };
-
-  //     setMessages(prev => [...prev, botMessage]);
-  //   } catch (error) {
-  //     console.error(error);
-  //     setMessages(prev => [...prev, {
-  //       id: messages.length + 2,
-  //       text: "Server error. Please try again.",
-  //       sender: 'bot',
-  //       timestamp: new Date()
-  //     }]);
-  //   }
-
-  //   setIsLoading(false);
-  //   setIsTyping(false);
-  // };
-
-  
-
-    // const handleSendMessage = async () => {
-    //   if (!inputMessage.trim() || uploadedFiles.length === 0) return;
-
-    //   const userMessage = {
-    //     id: messages.length + 1,
-    //     text: inputMessage,
-    //     sender: 'user',
-    //     timestamp: new Date()
-    //   };
-
-    //   setMessages(prev => [...prev, userMessage]);
-    //   setInputMessage('');
-    //   setIsLoading(true);
-    //   setIsTyping(true);
-
-    //   const formData = new FormData();
-    //   formData.append("query", inputMessage);
-    //   uploadedFiles.forEach((file) => {
-    //     formData.append("files", file.rawFile);
-    //   });
-
-    //   try {
-    //     const data = await sendChatMessage(formData);
-
-    //     const botMessage = {
-    //       id: messages.length + 2,
-    //       text: data.answer || "I'm having trouble processing your request.",
-    //       sender: 'bot',
-    //       timestamp: new Date()
-    //     };
-
-    //     setMessages(prev => [...prev, botMessage]);
-    //   } catch (error) {
-    //     console.error(error);
-    //     setMessages(prev => [...prev, {
-    //       id: messages.length + 2,
-    //       text: "Server error. Please try again.",
-    //       sender: 'bot',
-    //       timestamp: new Date()
-    //     }]);
-    //   }
-
-    //   setIsLoading(false);
-    //   setIsTyping(false);
-    // };
-
-
-  // const handleFileUpload = (event: any) => {
-  //   const files = Array.from(event.target.files);
-  //   const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
-
-  //   if (pdfFiles.length === 0) {
-  //     alert('Only PDFs allowed');
-  //     return;
-  //   }
-
-  //   const newFile = {
-  //     id: Date.now() + Math.random(),
-  //     name: pdfFiles[0].name,
-  //     size: pdfFiles[0].size,
-  //     uploadTime: new Date(),
-  //     rawFile: pdfFiles[0]
-  //   };
-
-  //   setUploadedFiles([newFile]);
-  //   setMessages(prev => [...prev, {
-  //     id: Date.now(),
-  //     text: `📄 Uploaded: ${newFile.name}`,
-  //     sender: 'bot',
-  //     timestamp: new Date()
-  //   }]);
-  // };
-
-    // const handleSendMessage = async () => {
-    //   if (!inputMessage.trim() || uploadedFiles.length === 0) return;
-
-    //   const userMessage = {
-    //     id: messages.length + 1,
-    //     text: inputMessage,
-    //     sender: 'user',
-    //     timestamp: new Date()
-    //   };
-
-    //   setMessages(prev => [...prev, userMessage]);
-    //   setInputMessage('');
-    //   setIsLoading(true);
-    //   setIsTyping(true);
-
-    //   const formData = new FormData();
-    //   formData.append("query", inputMessage);
-    //   uploadedFiles.forEach((file) => {
-    //     formData.append("files", file.rawFile);
-    //   });
-
-    //   try {
-    //     const data = await sendChatMessage(formData);
-
-    //     const botMessage = {
-    //       id: messages.length + 2,
-    //       text: data.answer || "I'm having trouble processing your request.",
-    //       sender: 'bot',
-    //       timestamp: new Date()
-    //     };
-
-    //     setMessages(prev => [...prev, botMessage]);
-    //   } catch (error) {
-    //     console.error(error);
-    //     setMessages(prev => [...prev, {
-    //       id: messages.length + 2,
-    //       text: "Server error. Please try again.",
-    //       sender: 'bot',
-    //       timestamp: new Date()
-    //     }]);
-    //   }
-
-    //   setIsLoading(false);
-    //   setIsTyping(false);
-    // };
   
     const handleSendMessage = async () => {
   if (!inputMessage.trim() || uploadedFiles.length === 0) return;
 
+  const startTime = Date.now();
   const userMessage = {
     id: messages.length + 1,
     text: inputMessage,
@@ -250,7 +81,8 @@ export const useChat = () => {
           try {
             const parsed = JSON.parse(msg.slice(6));
             botText += parsed.chunk;
-            setMessages(prev => prev.map(m => m.id === botMessage.id ? { ...m, text: botText } : m));
+            const responseTime = Date.now() - startTime;
+            setMessages(prev => prev.map(m => m.id === botMessage.id ? { ...m, text: botText, responseTime } : m));
           } catch (e) {
             console.error("Parse error", e);
           }
@@ -272,56 +104,11 @@ export const useChat = () => {
 };
 
 
-//     const handleFileUpload = async (event: any) => {
-//       const files = Array.from(event.target.files);
-//       const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
 
-//       if (pdfFiles.length === 0) {
-//         alert('Only PDFs allowed');
-//         return;
-//       }
-
-//       const newFiles = pdfFiles.map((file: any) => ({
-//         id: Date.now() + Math.random(),
-//         name: file.name,
-//         size: file.size,
-//         uploadTime: new Date(),
-//         rawFile: file
-//     }));
-
-//   setUploadedFiles(prev => [...prev, ...newFiles]);
-
-//   const uploadMessages = newFiles.map(file => ({
-//     id: Date.now() + Math.random(),
-//     text: `📄 Uploaded: ${file.name}`,
-//     sender: 'bot',
-//     timestamp: new Date()
-//   }));
-
-//   setMessages(prev => [...prev, ...uploadMessages]);
-
-//    // 🔹 Immediately request suggested questions
-//       try {
-//         const formData = new FormData();
-//         pdfFiles.forEach(file => formData.append("files", file));
-
-//         const res = await fetch("http://localhost:8000/generate-suggested-questions", {
-//           method: "POST",
-//           body: formData
-//         });
-
-//         const data = await res.json();
-//         if (data.questions) {
-//           setSuggestedQuestions(data.questions);
-//         }
-//       } catch (err) {
-//         console.error("Error generating suggested questions", err);
-//       }
-// };
 
 const handleFileUpload = async (event: any) => {
-  const files = Array.from(event.target.files);
-  const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
+  const files = Array.from(event.target.files) as File[];
+  const pdfFiles = files.filter((file: File) => file.type === 'application/pdf');
 
   if (pdfFiles.length === 0) {
     alert('Only PDFs allowed');
@@ -333,34 +120,62 @@ const handleFileUpload = async (event: any) => {
     name: file.name,
     size: file.size,
     uploadTime: new Date(),
-    rawFile: file
+    rawFile: file,
+    status: 'uploading' as const
   }));
 
-  // Update uploaded files in state
+  // Update uploaded files in state with uploading status
   setUploadedFiles(prev => [...prev, ...newFiles]);
 
   // Show "uploaded" messages in chat
   const uploadMessages = newFiles.map(file => ({
     id: Date.now() + Math.random(),
-    text: `📄 Uploaded: ${file.name}`,
+    text: `📄 Uploading: ${file.name}`,
     sender: 'bot',
     timestamp: new Date()
   }));
   setMessages(prev => [...prev, ...uploadMessages]);
 
   try {
+    // Update status to processing
+    setUploadedFiles(prev => prev.map(file => 
+      newFiles.some(newFile => newFile.id === file.id) 
+        ? { ...file, status: 'processing' as const }
+        : file
+    ));
+
     // 1️⃣ Upload and index PDFs in Qdrant
     const uploadFormData = new FormData();
-    pdfFiles.forEach(file => uploadFormData.append("files", file));
+    pdfFiles.forEach((file: File) => uploadFormData.append("files", file));
 
-    await fetch("http://localhost:8000/upload-pdfs", {
+    const uploadResponse = await fetch("http://localhost:8000/upload-pdfs", {
       method: "POST",
       body: uploadFormData
     });
 
+    if (uploadResponse.ok) {
+      // Update status to completed
+      setUploadedFiles(prev => prev.map(file => 
+        newFiles.some(newFile => newFile.id === file.id) 
+          ? { ...file, status: 'completed' as const }
+          : file
+      ));
+
+      // Update chat messages
+      const completedMessages = newFiles.map(file => ({
+        id: Date.now() + Math.random(),
+        text: `✅ Ready: ${file.name}`,
+        sender: 'bot',
+        timestamp: new Date()
+      }));
+      setMessages(prev => [...prev, ...completedMessages]);
+    } else {
+      throw new Error('Upload failed');
+    }
+
     // 2️⃣ Request suggested questions
     const suggestFormData = new FormData();
-    pdfFiles.forEach(file => suggestFormData.append("files", file));
+    pdfFiles.forEach((file: File) => suggestFormData.append("files", file));
 
     const res = await fetch("http://localhost:8000/generate-suggested-questions", {
       method: "POST",
@@ -373,6 +188,22 @@ const handleFileUpload = async (event: any) => {
     }
   } catch (err) {
     console.error("Error uploading PDFs or generating suggested questions", err);
+    
+    // Update status to error
+    setUploadedFiles(prev => prev.map(file => 
+      newFiles.some(newFile => newFile.id === file.id) 
+        ? { ...file, status: 'error' as const }
+        : file
+    ));
+
+    // Show error messages
+    const errorMessages = newFiles.map(file => ({
+      id: Date.now() + Math.random(),
+      text: `❌ Error uploading: ${file.name}`,
+      sender: 'bot',
+      timestamp: new Date()
+    }));
+    setMessages(prev => [...prev, ...errorMessages]);
   }
 };
 
@@ -381,25 +212,7 @@ const handleFileUpload = async (event: any) => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
-  // const formatFileSize = (bytes: number) => {
-  //   if (bytes === 0) return '0 Bytes';
-  //   const k = 1024;
-  //   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  //   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  //   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  // };
-
   
-
-  // const suggestedQuestions = [
-  //   "How do I apply for admission?",
-  //   "What undergraduate programs are offered?",
-  //   "Can you tell me about campus facilities?",
-  //   "What scholarships are available?",
-  //   "How do I contact the admissions office?",
-  //   "What student clubs and organizations are there?"
-  // ];
-
   return {
     messages,
     inputMessage,
@@ -416,142 +229,3 @@ const handleFileUpload = async (event: any) => {
     suggestedQuestions
   };
 };
-// import { useState, useEffect, useRef } from 'react';
-
-// export const useChat = () => {
-//   const [messages, setMessages] = useState<any[]>([
-//     {
-//       id: 1,
-//       text: "Hello! I'm your University Info Assistant...",
-//       sender: 'bot',
-//       timestamp: new Date()
-//     }
-//   ]);
-//   const [inputMessage, setInputMessage] = useState('');
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
-//   const [isTyping, setIsTyping] = useState(false);
-//   const messagesEndRef = useRef(null);
-
-//   const scrollToBottom = () => {
-//     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-//   };
-
-//   useEffect(() => {
-//     scrollToBottom();
-//   }, [messages]);
-
-//   const handleSendMessage = async () => {
-//     if (!inputMessage.trim() || uploadedFiles.length === 0) return;
-
-//     const userMessage = {
-//       id: messages.length + 1,
-//       text: inputMessage,
-//       sender: 'user',
-//       timestamp: new Date()
-//     };
-
-//     setMessages(prev => [...prev, userMessage]);
-//     setInputMessage('');
-//     setIsLoading(true);
-//     setIsTyping(true);
-
-//     const formData = new FormData();
-//     formData.append("query", inputMessage);
-//     formData.append("file", uploadedFiles[0].rawFile);
-
-//     try {
-//       const response = await fetch("http://localhost:8000/chat", {
-//         method: "POST",
-//         body: formData
-//       });
-
-//       const data = await response.json();
-
-//       const botMessage = {
-//         id: messages.length + 2,
-//         text: data.answer || "I'm having trouble processing your request.",
-//         sender: 'bot',
-//         timestamp: new Date()
-//       };
-
-//       setMessages(prev => [...prev, botMessage]);
-//     } catch (error) {
-//       console.error(error);
-//       setMessages(prev => [...prev, {
-//         id: messages.length + 2,
-//         text: "Server error. Please try again.",
-//         sender: 'bot',
-//         timestamp: new Date()
-//       }]);
-//     }
-
-//     setIsLoading(false);
-//     setIsTyping(false);
-//   };
-
-//   const handleFileUpload = (event: any) => {
-//     const files = Array.from(event.target.files);
-//     const pdfFiles = files.filter((file: any) => file.type === 'application/pdf');
-
-//     if (pdfFiles.length === 0) {
-//       alert('Only PDFs allowed');
-//       return;
-//     }
-
-//     const newFile = {
-//       id: Date.now() + Math.random(),
-//       name: pdfFiles[0].name,
-//       size: pdfFiles[0].size,
-//       uploadTime: new Date(),
-//       rawFile: pdfFiles[0]
-//     };
-
-//     setUploadedFiles([newFile]);
-
-//     setMessages(prev => [...prev, {
-//       id: Date.now(),
-//       text: `📄 Uploaded: ${newFile.name}`,
-//       sender: 'bot',
-//       timestamp: new Date()
-//     }]);
-//   };
-
-//   const removeFile = (fileId: number) => {
-//     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
-//   };
-
-//   const formatFileSize = (bytes: number) => {
-//     if (bytes === 0) return '0 Bytes';
-//     const k = 1024;
-//     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-//     const i = Math.floor(Math.log(bytes) / Math.log(k));
-//     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-//   };
-
-//   const suggestedQuestions = [
-//     "How do I apply for admission?",
-//     "What undergraduate programs are offered?",
-//     "Can you tell me about campus facilities?",
-//     "What scholarships are available?",
-//     "How do I contact the admissions office?",
-//     "What student clubs and organizations are there?"
-//   ];
-
-//   return {
-//     messages,
-//     inputMessage,
-//     setInputMessage,
-//     isLoading,
-//     handleSendMessage,
-//     handleFileUpload,
-//     uploadedFiles,
-//     removeFile,
-//     formatFileSize,
-//     isTyping,
-//     messagesEndRef,
-//     suggestedQuestions
-//   };
-// };
-
-// hooks/useChat.ts

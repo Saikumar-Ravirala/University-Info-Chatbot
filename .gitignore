@@ -19,7 +19,10 @@ backend/services/test_chatbot.py
 backend/temp/*
 backend/routes/__pycache__/*
 backend/services/__pycache__/*
-
+backend/services/testing/test_paddleocr.py
+backend/routes/__pycache__
+backend/services/__pycache__
+backend/services/testing
 
 # ========================
 # 🌐 Node.js (Next.js frontend)

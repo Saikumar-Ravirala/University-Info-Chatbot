@@ -4,6 +4,7 @@ export interface Message {
   text: string;
   sender: 'user' | 'bot';
   timestamp: Date;
+  responseTime?: number; // in milliseconds
 }
 
 export interface UploadedFile {
@@ -12,4 +13,5 @@ export interface UploadedFile {
   size: number;
   uploadTime: Date;
   rawFile: File;
+  status: 'uploading' | 'processing' | 'completed' | 'error';
 }

@@ -31,7 +31,7 @@ async def upload_pdfs(files: List[UploadFile] = File(...)):
     # Index PDFs into Qdrant
     await to_thread.run_sync(lambda: index_pdfs_to_qdrant(pdf_paths, file_names))
 
-    return JSONResponse({"message": "PDFs indexed successfully"})
+    return JSONResponse({"message": "PDFs indexed successfully", "status": "completed"})
 
 @router.post("/chat-stream")
 async def chat_stream(request: Request, query: str = Form(...)):
