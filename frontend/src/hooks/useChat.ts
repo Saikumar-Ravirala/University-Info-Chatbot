@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { formatFileSize } from '@/utils/formatFileSize';
 
 export const useChat = () => {
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+
   const [messages, setMessages] = useState<any[]>([{
     id: 1,
     text: "Hello! I'm your University Info Assistant...",
@@ -32,7 +34,7 @@ export const useChat = () => {
   useEffect(() => {
     const handleUnload = async () => {
       try {
-        await fetch("http://localhost:8000/cleanup-session", {
+        await fetch(`${API_BASE}/cleanup-session`, {
           method: "POST",
           body: JSON.stringify({ session_id: sessionId }),
           headers: { "Content-Type": "application/json" }
@@ -70,7 +72,7 @@ export const useChat = () => {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/chat-stream", {
+      const response = await fetch(`${API_BASE}/chat-stream`, {
         method: "POST",
         body: formData,
       });
@@ -163,7 +165,7 @@ export const useChat = () => {
       uploadFormData.append("session_id", sessionId);
       pdfFiles.forEach((file: File) => uploadFormData.append("files", file));
 
-      const uploadResponse = await fetch("http://localhost:8000/upload-pdfs", {
+      const uploadResponse = await fetch(`${API_BASE}/upload-pdfs`, {
         method: "POST",
         body: uploadFormData
       });
@@ -191,7 +193,7 @@ export const useChat = () => {
       suggestFormData.append("session_id", sessionId);
       pdfFiles.forEach((file: File) => suggestFormData.append("files", file));
 
-      const res = await fetch("http://localhost:8000/generate-suggested-questions", {
+      const res = await fetch(`${API_BASE}/generate-suggested-questions`, {
         method: "POST",
         body: suggestFormData
       });
