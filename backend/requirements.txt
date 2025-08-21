@@ -4,7 +4,6 @@ aiosignal==1.4.0
 annotated-types==0.7.0
 anyio==4.9.0
 attrs==25.3.0
-beautifulsoup4==4.13.4
 cachetools==5.5.2
 certifi==2025.7.14
 chardet==5.2.0
@@ -21,7 +20,6 @@ dnspython==2.7.0
 easyocr==1.7.2
 einops==0.8.1
 et_xmlfile==2.0.0
-faiss-cpu==1.11.0.post1
 fastapi==0.116.1
 filelock==3.18.0
 frozenlist==1.7.0
@@ -81,9 +79,7 @@ openpyxl==3.1.5
 opt-einsum==3.3.0
 orjson==3.11.2
 packaging==25.0
-paddleocr==3.1.1
-paddlepaddle==3.1.0
-paddlex==3.1.4
+
 pandas==2.3.1
 pillow==11.3.0
 portalocker==3.2.0
@@ -103,7 +99,6 @@ pymongo==4.13.2
 PyMuPDF==1.26.3
 pyparsing==3.2.3
 pypdfium2==4.30.0
-pytesseract==0.3.13
 python-bidi==0.6.6
 python-dateutil==2.9.0.post0
 python-dotenv==1.1.1
