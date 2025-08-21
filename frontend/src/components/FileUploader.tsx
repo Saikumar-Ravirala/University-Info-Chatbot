@@ -3,7 +3,13 @@
 import React from 'react';
 import { Upload } from 'lucide-react';
 
-const FileUploader = ({ fileInputRef, handleFileUpload, isLoading }) => (
+interface FileUploaderProps {
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  isLoading: boolean;
+}
+
+const FileUploader = ({ fileInputRef, handleFileUpload, isLoading }: FileUploaderProps) => (
   <div className="p-4 border-b border-gray-200">
     <button
       onClick={() => fileInputRef.current?.click()}

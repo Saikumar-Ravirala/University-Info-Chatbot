@@ -48,7 +48,7 @@ export const useChat = () => {
 
     window.addEventListener("beforeunload", handleUnload);
     return () => window.removeEventListener("beforeunload", handleUnload);
-  }, [sessionId]);
+  }, [sessionId, API_BASE]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || uploadedFiles.length === 0) return;

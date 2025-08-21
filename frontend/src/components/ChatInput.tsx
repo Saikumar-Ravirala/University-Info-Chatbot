@@ -3,7 +3,15 @@
 import React from 'react';
 import { Send, Loader } from 'lucide-react';
 
-const ChatInput = ({
+interface ChatInputProps {
+  inputMessage: string;
+  setInputMessage: (message: string) => void;
+  handleSendMessage: () => void;
+  isLoading: boolean;
+  uploadedFiles: Array<{ name: string; id: string }>;
+}
+
+const ChatInput: React.FC<ChatInputProps> = ({
   inputMessage,
   setInputMessage,
   handleSendMessage,
