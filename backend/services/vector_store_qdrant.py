@@ -1,11 +1,13 @@
 # vector_store_qdrant.py
 import os
+import uuid
+import numpy as np
+import time
+from typing import List, Dict
+from datetime import datetime
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, Distance, VectorParams
-import numpy as np
-import uuid
-from typing import List, Dict
 
 # Load environment variables
 load_dotenv()
@@ -13,29 +15,170 @@ load_dotenv()
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
-client = QdrantClient(
-    url=QDRANT_URL,
-    api_key=QDRANT_API_KEY
-)
+client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
 
-# # Initialize Qdrant client (use env vars for safety)
+def generate_collection_name() -> str:
+    """Generates a unique collection name for each user session."""
+    return f"user-session-{uuid.uuid4().hex}"
+
+def create_qdrant_collection_if_not_exists(collection_name: str, dim: int):
+    """Creates a Qdrant collection only if it doesn't already exist."""
+    existing = client.get_collections().collections
+    if not any(c.name == collection_name for c in existing):
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
+        )
+
+# def upload_to_qdrant(collection_name: str, embeddings, metadata, batch_size: int = 50):
+#     """Uploads points to Qdrant in batches."""
+#     timestamp = datetime.utcnow().isoformat()
+#     points = [
+#         PointStruct(
+#             id=str(uuid.uuid4()),
+#             vector=embedding.tolist(),
+#             payload={**meta, "timestamp": timestamp}
+#         )
+#         for embedding, meta in zip(embeddings, metadata)
+#     ]
+
+#     for i in range(0, len(points), batch_size):
+#         batch = points[i:i + batch_size]
+#         try:
+#             client.upsert(collection_name=collection_name, points=batch)
+#         except Exception as e:
+#             print(f"❌ Failed to upload batch {i // batch_size + 1}: {e}")
+
+
+def upload_to_qdrant(
+    collection_name: str,
+    embeddings,
+    metadata,
+    batch_size: int = 10,
+    max_retries: int = 3,
+    log_collection_size: bool = True
+):
+    """
+    Uploads points to Qdrant with retries and logging.
+
+    Args:
+        collection_name (str): Qdrant collection name.
+        embeddings (np.ndarray): Embedding vectors.
+        metadata (List[Dict]): Metadata for each chunk.
+        batch_size (int): Number of points per batch.
+        max_retries (int): Retry attempts per batch.
+        log_collection_size (bool): Whether to log final collection size.
+    """
+    timestamp = datetime.utcnow().isoformat()
+    points = [
+        PointStruct(
+            id=str(uuid.uuid4()),
+            vector=embedding.tolist(),
+            payload={**meta, "timestamp": timestamp}
+        )
+        for embedding, meta in zip(embeddings, metadata)
+    ]
+
+    total_uploaded = 0
+
+    for i in range(0, len(points), batch_size):
+        batch = points[i:i + batch_size]
+        for attempt in range(max_retries):
+            try:
+                client.upsert(collection_name=collection_name, points=batch)
+                print(f"✅ Uploaded batch {i // batch_size + 1} ({len(batch)} points)")
+                total_uploaded += len(batch)
+                break
+            except Exception as e:
+                print(f"❌ Batch {i // batch_size + 1} failed (attempt {attempt + 1}): {e}")
+                time.sleep(2 ** attempt)  # exponential backoff
+        else:
+            print(f"🚫 Giving up on batch {i // batch_size + 1} after {max_retries} attempts")
+
+    if log_collection_size:
+        try:
+            count = client.count(collection_name=collection_name, exact=True).count
+            print(f"📦 Total points in collection '{collection_name}': {count}")
+        except Exception as e:
+            print(f"⚠️ Failed to fetch collection size: {e}")
+
+
+def search_qdrant(collection_name: str, query_embedding: np.ndarray, top_k: int = 5) -> List[Dict]:
+    """Searches Qdrant and returns top_k matching metadata entries."""
+    results = client.search(
+        collection_name=collection_name,
+        query_vector=query_embedding.tolist(),
+        limit=top_k,
+        with_payload=True
+    )
+    return [r.payload for r in results]
+
+def delete_qdrant_collection(collection_name: str):
+    """Deletes a Qdrant collection (for session cleanup)."""
+    try:
+        client.delete_collection(collection_name=collection_name)
+        print(f"✅ Deleted collection: {collection_name}")
+    except Exception as e:
+        print(f"❌ Failed to delete collection {collection_name}: {e}")
+
+# import os
+# from dotenv import load_dotenv
+# from qdrant_client import QdrantClient
+# from qdrant_client.models import PointStruct, Distance, VectorParams
+# import numpy as np
+# import uuid
+# from typing import List, Dict
+
+# # Load environment variables
+# load_dotenv()
+
+# QDRANT_URL = os.getenv("QDRANT_URL")
+# QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
 # client = QdrantClient(
-#     url="https://your-cluster-name.qdrant.tech",
-#     api_key="your-api-key"
+#     url=QDRANT_URL,
+#     api_key=QDRANT_API_KEY
 # )
 
-def create_qdrant_collection(collection_name: str, dim: int):
-    """
-    Creates or resets a Qdrant collection.
-    """
-    client.recreate_collection(
-        collection_name=collection_name,
-        vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
-    )
+# # # Initialize Qdrant client (use env vars for safety)
+# # client = QdrantClient(
+# #     url="https://your-cluster-name.qdrant.tech",
+# #     api_key="your-api-key"
+# # )
 
-# def upload_to_qdrant(collection_name: str, embeddings: np.ndarray, metadata: List[Dict]):
+# def create_qdrant_collection(collection_name: str, dim: int):
 #     """
-#     Uploads embeddings and metadata to Qdrant.
+#     Creates or resets a Qdrant collection.
+#     """
+#     client.recreate_collection(
+#         collection_name=collection_name,
+#         vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
+#     )
+
+# # def upload_to_qdrant(collection_name: str, embeddings: np.ndarray, metadata: List[Dict]):
+# #     """
+# #     Uploads embeddings and metadata to Qdrant.
+# #     """
+# #     points = [
+# #         PointStruct(
+# #             id=str(uuid.uuid4()),
+# #             vector=embedding.tolist(),
+# #             payload=meta
+# #         )
+# #         for embedding, meta in zip(embeddings, metadata)
+# #     ]
+# #     client.upsert(collection_name=collection_name, points=points)
+
+# # Function to upload data in batches to avoid timeout issues
+# def upload_to_qdrant(collection_name: str, embeddings, metadata, batch_size: int = 50):
+#     """
+#     Uploads points to Qdrant in batches to avoid timeout issues.
+
+#     Args:
+#         collection_name (str): Name of the Qdrant collection.
+#         embeddings (List[np.ndarray]): List of embedding vectors.
+#         metadata (List[Dict]): List of metadata dictionaries for each chunk.
+#         batch_size (int): Number of points per batch.
 #     """
 #     points = [
 #         PointStruct(
@@ -45,44 +188,23 @@ def create_qdrant_collection(collection_name: str, dim: int):
 #         )
 #         for embedding, meta in zip(embeddings, metadata)
 #     ]
-#     client.upsert(collection_name=collection_name, points=points)
 
-# Function to upload data in batches to avoid timeout issues
-def upload_to_qdrant(collection_name: str, embeddings, metadata, batch_size: int = 50):
-    """
-    Uploads points to Qdrant in batches to avoid timeout issues.
-
-    Args:
-        collection_name (str): Name of the Qdrant collection.
-        embeddings (List[np.ndarray]): List of embedding vectors.
-        metadata (List[Dict]): List of metadata dictionaries for each chunk.
-        batch_size (int): Number of points per batch.
-    """
-    points = [
-        PointStruct(
-            id=str(uuid.uuid4()),
-            vector=embedding.tolist(),
-            payload=meta
-        )
-        for embedding, meta in zip(embeddings, metadata)
-    ]
-
-    for i in range(0, len(points), batch_size):
-        batch = points[i:i + batch_size]
-        try:
-            client.upsert(collection_name=collection_name, points=batch)
-        except Exception as e:
-            print(f"❌ Failed to upload batch {i // batch_size + 1}: {e}")
+#     for i in range(0, len(points), batch_size):
+#         batch = points[i:i + batch_size]
+#         try:
+#             client.upsert(collection_name=collection_name, points=batch)
+#         except Exception as e:
+#             print(f"❌ Failed to upload batch {i // batch_size + 1}: {e}")
 
 
 
-def search_qdrant(collection_name: str, query_embedding: np.ndarray, top_k: int = 5) -> List[Dict]:
-    """
-    Searches Qdrant and returns top_k matching metadata entries.
-    """
-    results = client.search(
-        collection_name=collection_name,
-        query_vector=query_embedding.tolist(),
-        limit=top_k
-    )
-    return [r.payload for r in results]
+# def search_qdrant(collection_name: str, query_embedding: np.ndarray, top_k: int = 5) -> List[Dict]:
+#     """
+#     Searches Qdrant and returns top_k matching metadata entries.
+#     """
+#     results = client.search(
+#         collection_name=collection_name,
+#         query_vector=query_embedding.tolist(),
+#         limit=top_k
+#     )
+#     return [r.payload for r in results]
