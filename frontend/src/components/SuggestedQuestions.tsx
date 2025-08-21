@@ -1,7 +1,12 @@
 import React from "react";
 import { Search } from "lucide-react";
 
-const SuggestedQuestions = ({ suggestedQuestions, setInputMessage }) => (
+interface SuggestedQuestionsProps {
+  suggestedQuestions: string[];
+  setInputMessage: (message: string) => void;
+}
+
+const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({ suggestedQuestions, setInputMessage }) => (
   <div className="p-4 bg-white">
     <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
       <Search className="w-4 h-4 mr-2" />
