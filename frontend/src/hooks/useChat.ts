@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { formatFileSize } from '@/utils/formatFileSize';
 
 export const useChat = () => {
-  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  // const API_BASE = process.env.NEXT_PUBLIC_API_URL;
+  const API_BASE = "https://university-info-chatbot-cy9d.onrender.com";
 
   const [messages, setMessages] = useState<any[]>([{
     id: 1,
