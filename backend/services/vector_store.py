@@ -12,15 +12,6 @@ def build_faiss_index(embeddings: np.ndarray) -> faiss.IndexFlatL2:
     index.add(embeddings)
     return index
 
-# def search_faiss_index(index: faiss.IndexFlatL2, query_embedding: np.ndarray, top_k: int = 5) -> List[int]:
-#     """
-#     Searches the FAISS index for top_k similar vectors.
-#     Returns indices of the most similar chunks.
-#     """
-#     query_embedding = np.array([query_embedding])  # FAISS expects 2D array
-#     distances, indices = index.search(query_embedding, top_k)
-#     return indices[0].tolist()
-
 def search_faiss_index(index: faiss.IndexFlatL2, query_embedding: np.ndarray, metadata: List[Dict], top_k: int = 5) -> List[Dict]:
     """
     Searches FAISS index and returns top_k matching metadata entries.
