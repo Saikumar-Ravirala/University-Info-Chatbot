@@ -74,7 +74,9 @@ const UploadedFiles: React.FC<UploadedFilesProps> = ({
                       {file.name}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+                  <p className="text-xs text-gray-500">
+                    {file.size !== null ? formatFileSize(file.size) : "Web Link"}
+                  </p>
                 </div>
                 <button
                   onClick={() => removeFile(file.id)}

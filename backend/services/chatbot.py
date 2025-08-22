@@ -11,6 +11,17 @@ from .vector_store_qdrant import  upload_to_qdrant, search_qdrant,create_qdrant_
 import numpy as np
 from typing import List, Dict,Tuple
 
+from .scraper import scrape_page, flatten_scraped_data
+
+async def index_scraped_url_to_qdrant(url: str, selectors: List[str], collection_name: str):
+    scraped_data = await scrape_page(url, selectors)
+    chunks = flatten_scraped_data(scraped_data, url)
+
+    embeddings = get_embeddings_for_metadata(chunks)
+    create_qdrant_collection_if_not_exists(collection_name, embeddings.shape[1])
+    upload_to_qdrant(collection_name, embeddings, chunks)
+    print(f"🌐 Scraped content from '{url}' indexed into '{collection_name}'.")
+
 
 def index_pdfs_to_qdrant(pdf_paths: List[str], file_names: List[str], collection_name: str):
     all_chunks = []

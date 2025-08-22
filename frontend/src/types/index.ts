@@ -10,8 +10,8 @@ export interface Message {
 export interface UploadedFile {
   id: number;
   name: string;
-  size: number;
+  size: number | null;
   uploadTime: Date;
-  rawFile: File;
+  rawFile: File | null;
   status: 'uploading' | 'processing' | 'completed' | 'error';
 }

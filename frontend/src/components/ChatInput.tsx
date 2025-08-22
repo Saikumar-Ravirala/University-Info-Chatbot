@@ -2,6 +2,7 @@
 // components/AcademicChatbot/ChatInput.tsx
 import React from 'react';
 import { Send, Loader } from 'lucide-react';
+import UploadMenu from './UploadMenu';
 
 interface ChatInputProps {
   inputMessage: string;
@@ -9,6 +10,8 @@ interface ChatInputProps {
   handleSendMessage: () => void;
   isLoading: boolean;
   uploadedFiles: Array<{ name: string; id: string }>;
+  handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleUrlUpload: (url: string) => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
@@ -16,10 +19,17 @@ const ChatInput: React.FC<ChatInputProps> = ({
   setInputMessage,
   handleSendMessage,
   isLoading,
-  uploadedFiles
+  uploadedFiles,
+  handleFileUpload,
+  handleUrlUpload,
 }) => (
   <div className="border-t border-gray-200 bg-white p-4 sticky bottom-0 z-10">
-    <div className="flex space-x-3">
+        <div className="flex items-center space-x-3">
+            <UploadMenu 
+        handleFileUpload={handleFileUpload}
+        handleUrlUpload={handleUrlUpload} 
+        isLoading={isLoading} 
+      />
       <div className="flex-1 relative">
         <input
           type="text"

@@ -2,6 +2,7 @@
 # 📦 Python (FastAPI)
 # ========================
 __pycache__/
+*.pyc
 *.py[cod]
 *.env
 *.db

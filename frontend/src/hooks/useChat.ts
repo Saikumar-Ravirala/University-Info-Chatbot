@@ -5,7 +5,8 @@ import { formatFileSize } from '@/utils/formatFileSize';
 
 export const useChat = () => {
   // const API_BASE = process.env.NEXT_PUBLIC_API_URL;
-  const API_BASE = "https://university-info-chatbot-cy9d.onrender.com";
+  // const API_BASE = "https://university-info-chatbot-cy9d.onrender.com";
+  const API_BASE = "http://localhost:8000";
 
   const [messages, setMessages] = useState<any[]>([{
     id: 1,
@@ -228,6 +229,66 @@ export const useChat = () => {
     setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
+  const handleUrlUpload = async (url: string) => {
+    const newFile = {
+      id: Date.now() + Math.random(),
+      name: url,
+      size: null,
+      uploadTime: new Date(),
+      rawFile: null,
+      status: 'uploading' as const
+    };
+
+    setUploadedFiles(prev => [...prev, newFile]);
+    setMessages(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      text: `📄 Uploading: ${url}`,
+      sender: 'bot',
+      timestamp: new Date()
+    }]);
+
+    try {
+      setUploadedFiles(prev => prev.map(file => 
+        file.id === newFile.id ? { ...file, status: 'processing' as const } : file
+      ));
+
+      const uploadFormData = new FormData();
+      uploadFormData.append("session_id", sessionId);
+      uploadFormData.append("urls", url);
+
+      const uploadResponse = await fetch(`${API_BASE}/upload-urls`, {
+        method: "POST",
+        body: uploadFormData
+      });
+
+      if (uploadResponse.ok) {
+        setUploadedFiles(prev => prev.map(file => 
+          file.id === newFile.id ? { ...file, status: 'completed' as const } : file
+        ));
+        setMessages(prev => [...prev, {
+          id: Date.now() + Math.random(),
+          text: `✅ Ready: ${url}`,
+          sender: 'bot',
+          timestamp: new Date()
+        }]);
+      } else {
+        throw new Error('Upload failed');
+      }
+
+    } catch (err) {
+      console.error("Error uploading URL", err);
+      setUploadedFiles(prev => prev.map(file => 
+        file.id === newFile.id ? { ...file, status: 'error' as const } : file
+      ));
+      setMessages(prev => [...prev, {
+        id: Date.now() + Math.random(),
+        text: `❌ Error uploading: ${url}`,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+    }
+  };
+
   return {
     messages,
     inputMessage,
@@ -235,6 +296,7 @@ export const useChat = () => {
     isLoading,
     handleSendMessage,
     handleFileUpload,
+    handleUrlUpload,
     uploadedFiles,
     setUploadedFiles,
     removeFile,
