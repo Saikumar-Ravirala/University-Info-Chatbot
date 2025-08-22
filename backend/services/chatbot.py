@@ -2,8 +2,9 @@
 #from .pdf_parser import extract_text_by_page, extract_text_and_images_by_page_with_easyOCR, extract_text_with_hybrid_approach, extract_pdf_with_region_ocr, extract_pdf_with_region_paddleocr
 from .pdf_parser import extract_pdf_with_region_ocr
 from .chunker import chunk_text_with_metadata
-from .embedder import get_embeddings_for_metadata, model
-from .vector_store import build_faiss_index, search_faiss_index
+# from .embedder import get_embeddings_for_metadata, model
+from .embedder import get_embeddings_for_metadata, get_model
+# from .vector_store import build_faiss_index, search_faiss_index
 from .vector_store_qdrant import  upload_to_qdrant, search_qdrant,create_qdrant_collection_if_not_exists,delete_qdrant_collection
 
 # from .gemini_client import generate_answer
@@ -24,6 +25,7 @@ def index_pdfs_to_qdrant(pdf_paths: List[str], file_names: List[str], collection
     print(f"✅ Collection '{collection_name}' indexed. Ready for questions.")
 
 def query_rag(user_query: str, collection_name: str, top_k=3):
+    model = get_model()
     query_embedding = model.encode(user_query)
     retrieved_chunks = search_qdrant(collection_name, query_embedding, top_k)
     context_texts = [chunk["text"] for chunk in retrieved_chunks]
