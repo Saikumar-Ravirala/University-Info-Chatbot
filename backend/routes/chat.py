@@ -1,19 +1,25 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from typing import Optional, List
 from fastapi import APIRouter, UploadFile, File, Request, Body, Form
 from fastapi.responses import JSONResponse, StreamingResponse
-from services.chatbot import index_pdfs_to_qdrant, query_rag, cleanup_user_collection,index_scraped_url_to_qdrant
+from services.chatbot import index_pdfs_to_qdrant, query_rag, cleanup_user_collection,index_scraped_url_to_qdrant,index_docs_to_qdrant
 from utils.context import get_history, save_message
 from services.gemini_client import stream_gemini_answer, generate_suggested_questions_gemini
-from services.pdf_parser import extract_text_from_pdf
+from services.parser.pdf_parser import extract_text_from_pdf
 from anyio import to_thread
 import os, json, shutil, asyncio, logging, uuid
+from langsmith import Client
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+client = Client(api_key=os.getenv("LANGSMITH_API_KEY"))
 
 # 🆕 Upload PDFs and index to session-specific collection
 @router.post("/upload-pdfs")
 async def upload_pdfs(request: Request, files: List[UploadFile] = File(...)):
+    print("Upload PDFs endpoint called")
     form = await request.form()
     session_id = form.get("session_id") or str(uuid.uuid4())  # ✅ fallback
     collection_name = f"user-session-{session_id}"
@@ -31,6 +37,7 @@ async def upload_pdfs(request: Request, files: List[UploadFile] = File(...)):
             pdf_paths.append(file_path)
             file_names.append(file.filename)
 
+        print("about to index PDFs to Qdrant")
         await to_thread.run_sync(lambda: index_pdfs_to_qdrant(pdf_paths, file_names, collection_name))
         logger.info(f"Indexed PDFs for session {session_id}")
     except Exception as e:
@@ -44,6 +51,40 @@ async def upload_pdfs(request: Request, files: List[UploadFile] = File(...)):
         "status": "completed",
         "session_id": session_id  # ✅ return for reuse
     })
+
+@router.post("/upload-docs")
+async def upload_docs(request: Request, files: List[UploadFile] = File(...)):
+    form = await request.form()
+    session_id = form.get("session_id") or str(uuid.uuid4())
+    collection_name = f"user-session-{session_id}"
+    temp_dir = "temp"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    file_paths = []
+    file_names = []
+
+    try:
+        for file in files:
+            file_path = os.path.join(temp_dir, file.filename)
+            with open(file_path, "wb") as f:
+                f.write(await file.read())
+            file_paths.append(file_path)
+            file_names.append(file.filename)
+
+        await to_thread.run_sync(lambda: index_docs_to_qdrant(file_paths, file_names, collection_name))
+        logger.info(f"Indexed docs for session {session_id}")
+    except Exception as e:
+        logger.error(f"Indexing failed for session {session_id}: {str(e)}")
+        return JSONResponse({"error": f"Indexing failed: {str(e)}"}, status_code=500)
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    return JSONResponse({
+        "message": "Documents indexed successfully",
+        "status": "completed",
+        "session_id": session_id
+    })
+
 
 @router.post("/upload-urls")
 async def upload_urls(

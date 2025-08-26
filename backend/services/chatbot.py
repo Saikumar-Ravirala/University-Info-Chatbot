@@ -1,6 +1,7 @@
 # chatbot.py
 #from .pdf_parser import extract_text_by_page, extract_text_and_images_by_page_with_easyOCR, extract_text_with_hybrid_approach, extract_pdf_with_region_ocr, extract_pdf_with_region_paddleocr
-from .pdf_parser import extract_pdf_with_region_ocr
+from .parser.pdf_parser import extract_pdf_with_region_ocr
+from .parser.dispatcher import dispatch_parser
 from .chunker import chunk_text_with_metadata
 # from .embedder import get_embeddings_for_metadata, model
 from .embedder import get_embeddings_for_metadata, get_model
@@ -12,7 +13,9 @@ import numpy as np
 from typing import List, Dict,Tuple
 
 from .scraper import scrape_page, flatten_scraped_data
+from langsmith import traceable
 
+@traceable
 async def index_scraped_url_to_qdrant(url: str, selectors: List[str], collection_name: str):
     scraped_data = await scrape_page(url, selectors)
     chunks = flatten_scraped_data(scraped_data, url)
@@ -22,19 +25,38 @@ async def index_scraped_url_to_qdrant(url: str, selectors: List[str], collection
     upload_to_qdrant(collection_name, embeddings, chunks)
     print(f"🌐 Scraped content from '{url}' indexed into '{collection_name}'.")
 
-
-def index_pdfs_to_qdrant(pdf_paths: List[str], file_names: List[str], collection_name: str):
+@traceable
+def index_docs_to_qdrant(file_paths: List[str], file_names: List[str], collection_name: str):
     all_chunks = []
-    for path, name in zip(pdf_paths, file_names):
-        pages = extract_pdf_with_region_ocr(path)
-        chunks = chunk_text_with_metadata(pages, name)
-        all_chunks.extend(chunks)
+    for path, name in zip(file_paths, file_names):
+        try:
+            raw_text_or_pages = dispatch_parser(path)
+            chunks = chunk_text_with_metadata(raw_text_or_pages, name)
+            all_chunks.extend(chunks)
+        except Exception as e:
+            logger.warning(f"Failed to parse {name}: {str(e)}")
 
     embeddings = get_embeddings_for_metadata(all_chunks)
     create_qdrant_collection_if_not_exists(collection_name, embeddings.shape[1])
     upload_to_qdrant(collection_name, embeddings, all_chunks)
     print(f"✅ Collection '{collection_name}' indexed. Ready for questions.")
 
+@traceable(name="index_pdfs_to_qdrant")
+def index_pdfs_to_qdrant(pdf_paths: List[str], file_names: List[str], collection_name: str):
+    print("Indexing PDFs to Qdrant...")
+    all_chunks = []
+    for path, name in zip(pdf_paths, file_names):
+        pages = extract_pdf_with_region_ocr(path)
+        chunks = chunk_text_with_metadata(pages, name)
+        all_chunks.extend(chunks)
+
+    print(f"Total chunks created: {len(all_chunks)}")
+    embeddings = get_embeddings_for_metadata(all_chunks)
+    create_qdrant_collection_if_not_exists(collection_name, embeddings.shape[1])
+    upload_to_qdrant(collection_name, embeddings, all_chunks)
+    print(f"✅ Collection '{collection_name}' indexed. Ready for questions.")
+
+@traceable
 def query_rag(user_query: str, collection_name: str, top_k=3):
     model = get_model()
     query_embedding = model.encode(user_query)
@@ -43,5 +65,6 @@ def query_rag(user_query: str, collection_name: str, top_k=3):
     metadata = [{"source": chunk["source"], "page": chunk["page"]} for chunk in retrieved_chunks]
     return context_texts, metadata
 
+@traceable
 def cleanup_user_collection(collection_name: str):
     delete_qdrant_collection(collection_name)

@@ -8,6 +8,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct, Distance, VectorParams
+from langsmith import traceable
 
 # Load environment variables
 load_dotenv()
@@ -30,6 +31,7 @@ def create_qdrant_collection_if_not_exists(collection_name: str, dim: int):
             vectors_config=VectorParams(size=dim, distance=Distance.COSINE)
         )
 
+@traceable
 def upload_to_qdrant(
     collection_name: str,
     embeddings,
@@ -82,7 +84,7 @@ def upload_to_qdrant(
         except Exception as e:
             print(f"⚠️ Failed to fetch collection size: {e}")
 
-
+@traceable
 def search_qdrant(collection_name: str, query_embedding: np.ndarray, top_k: int = 5) -> List[Dict]:
     """Searches Qdrant and returns top_k matching metadata entries."""
     results = client.search(

@@ -1,5 +1,5 @@
 # test_embedder.py
-from pdf_parser import extract_text_from_pdf
+from backend.services.parser.pdf_parser import extract_text_from_pdf
 from chunker import chunk_text
 from embedder import get_embeddings
 

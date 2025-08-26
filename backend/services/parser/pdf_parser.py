@@ -5,6 +5,7 @@ from PIL import Image
 import io
 import gc
 from typing import List, Tuple
+from langsmith import traceable
 
 def extract_text_from_pdf(file_path: str) -> str:
     """
@@ -82,6 +83,7 @@ def group_blocks_by_proximity(blocks: List[dict], y_threshold: int = 40) -> List
 
     return [" ".join(b["text"] for b in group) for group in grouped]
 
+@traceable
 def extract_pdf_with_region_ocr(pdf_path: str) -> List[Tuple[int, str]]:
     """
     Extracts text from each page of a PDF using native text or OCR fallback.

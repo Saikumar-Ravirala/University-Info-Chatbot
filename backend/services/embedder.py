@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 import numpy as np
 import logging
+from langsmith import traceable
 
 from typing import TYPE_CHECKING
 
@@ -34,6 +35,7 @@ def get_embeddings(chunks: List[str]) -> np.ndarray:
         logging.error(f"❌ Embedding error: {e}")
         return np.empty((0, 0), dtype=np.float32)
 
+@traceable
 def get_embeddings_for_metadata(chunks: List[Dict]) -> np.ndarray:
     """
     Converts list of chunk dicts into embeddings using 'text' field.

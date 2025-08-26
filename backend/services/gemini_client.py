@@ -3,6 +3,7 @@ from typing import List, Dict
 import json
 from dotenv import load_dotenv
 import os
+from langsmith import traceable
 
 load_dotenv()
 
@@ -43,6 +44,7 @@ def format_rag_prompt(context_chunks: List[str], user_query: str, metadata: List
               """
     return prompt
 
+@traceable(name="generate_suggested_questions_gemini", run_type="llm")
 def generate_suggested_questions_gemini(prompt: str) -> List[str]:
     """
     Generates suggested questions based on the provided prompt.
@@ -70,6 +72,7 @@ def generate_suggested_questions_gemini(prompt: str) -> List[str]:
     # return response.text
 from google.generativeai.types import content_types
 
+@traceable(name="stream_gemini_answer", run_type="llm")
 def stream_gemini_answer(context_chunks: List[str], user_query: str, metadata: List[Dict], history: List[Dict[str, str]]):
     prompt = format_rag_prompt(context_chunks, user_query, metadata)
 
