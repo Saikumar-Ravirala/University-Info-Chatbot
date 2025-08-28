@@ -1,0 +1,48 @@
+# Since Dockerfile is in backend/, these paths are relative to backend/
+
+# Python and development files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation and logs
+logs/
+*.log
+*.tmp
+
+# Data and media files
+pdfs/
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Don't copy frontend files (since we're in backend/)
+../frontend/
+
+# Don't copy the parent .gitignore and other root files
+../.gitignore
+../README.md
